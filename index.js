@@ -1,6 +1,7 @@
 const chalk = require('chalk')
 const electron = require('electron')
-const childProcess = require('child_process')
+const portfinder = require('portfinder')
+const { spawn } = require('child_process')
 
 module.exports = class ElectronDevWebpackPlugin {
   constructor (options) {
@@ -10,22 +11,29 @@ module.exports = class ElectronDevWebpackPlugin {
 
   apply (compiler) {
     compiler.plugin('done', stats => {
-      const cp = childProcess.spawn(electron, [
-        '--inspect=5858',
-        '.'
-      ])
-      cp.stdout.on('data', data => {
-        this.log(chalk.yellowBright.bold.strikethrough(data))
-      })
-      cp.stderr.on('data', data => {
-        this.log(chalk.redBright.bold.strikethrough(data))
-      })
-
-      this.process.push(cp)
-      if (this.process.length) {
-        this.clearProcess()
-      }
+      portfinder.getPortPromise()
+        .then(port => this.spawn(port))
+        .catch(err => this.spawn())
     })
+  }
+
+  spawn (port) {
+    const args = typeof port === 'number'
+      ? [`--inspect=${port}`, '.']
+      : ['.']
+    const cp = spawn(electron, args)
+
+    cp.stdout.on('data', data => {
+      this.log(chalk.yellowBright.bold.strikethrough(data))
+    })
+    cp.stderr.on('data', data => {
+      this.log(chalk.redBright.bold.strikethrough(data))
+    })
+
+    this.process.push(cp)
+    if (this.process.length) {
+      this.clearProcess()
+    }
   }
 
   /**
