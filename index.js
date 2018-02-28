@@ -53,7 +53,6 @@ module.exports = class ElectronDevWebpackPlugin {
   clear () {
     return new Promise((resolve, reject) => {
       this.kill()
-      console.log(this.process)
       // 检查旧进程，防止没有被清理掉
       clearTimeout(this.timer)
       if (this.process.length) {
