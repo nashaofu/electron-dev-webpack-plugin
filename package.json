@@ -9,7 +9,8 @@
   ],
   "scripts": {
     "build": "tsc -p ./tsconfig.json",
-    "lint": "tslint -p ./tsconfig.json"
+    "lint": "tslint -p ./tsconfig.json",
+    "release": "npm run lint && npm run build && npm publish"
   },
   "dependencies": {
     "chalk": "^2.3.1",
