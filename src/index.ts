@@ -81,6 +81,9 @@ export = class ElectronDevWebpackPlugin {
     this.process = this.process.reduce((p: ChildProcess[], cp: ChildProcess) => {
       if (!cp.killed) {
         try {
+          if (process.platform === 'linux') {
+            process.kill(cp.pid)
+          }
           cp.kill()
         } catch (e) {
           console.log(`kill ${chalk.red(cp.pid.toString())} process is failed, ${chalk.red(e)}`)

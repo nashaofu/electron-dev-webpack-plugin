@@ -1,6 +1,6 @@
 {
   "name": "electron-dev-webpack-plugin",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "A webpack plugin for electron development",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
