@@ -49,6 +49,9 @@ export = class ElectronDevWebpackPlugin {
         cp.stderr.on('data', data => {
           this.log(chalk.redBright.bold.strikethrough(data.toString()))
         })
+        cp.on('close', () => {
+          this.process = this.process.filter(p => p.pid !== cp.pid)
+        })
         this.process.push(cp)
       })
   }
