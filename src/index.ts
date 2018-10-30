@@ -84,7 +84,7 @@ export = class ElectronDevWebpackPlugin {
     this.process = this.process.reduce((p: ChildProcess[], cp: ChildProcess) => {
       if (!cp.killed) {
         try {
-          if (process.platform === 'linux') {
+          if (process.platform === 'linux' || process.platform === 'darwin') {
             process.kill(cp.pid)
           }
           cp.kill()

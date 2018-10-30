@@ -1,6 +1,6 @@
 {
   "name": "electron-dev-webpack-plugin",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "A webpack plugin for electron development",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -14,12 +14,12 @@
   },
   "dependencies": {
     "chalk": "^2.4.1",
-    "electron": "^2.0.1",
-    "portfinder": "^1.0.13"
+    "electron": "^3.0.6",
+    "portfinder": "^1.0.19"
   },
   "devDependencies": {
-    "tslint": "^5.10.0",
-    "typescript": "^2.8.3"
+    "tslint": "^5.11.0",
+    "typescript": "^3.1.4"
   },
   "repository": {
     "type": "git",
