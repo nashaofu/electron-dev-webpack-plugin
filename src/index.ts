@@ -1,7 +1,8 @@
 import chalk from 'chalk'
-import { ChildProcess, spawn } from 'child_process'
 import electron from 'electron'
+import { Compiler } from 'webpack'
 import portfinder from 'portfinder'
+import { ChildProcess, spawn } from 'child_process'
 
 declare module 'child_process' {
   function spawn (command: string | electron.AllElectron, args?: string[], options?: SpawnOptions): ChildProcess
@@ -22,12 +23,14 @@ export = class ElectronDevWebpackPlugin {
    * webpack调用接口
    * @param {*} compiler
    */
-  public apply (compiler: any) {
+  public apply (compiler: Compiler) {
     portfinder.basePort = this.port
-    compiler.plugin('done', () => {
-      portfinder.getPortPromise()
+    compiler.hooks.done.tapPromise('ElectronDevWebpackPlugin', () => {
+      const promise = portfinder.getPortPromise()
+      promise
         .then(port => this.spawn(port))
         .catch(err => this.spawn())
+      return promise
     })
   }
 
