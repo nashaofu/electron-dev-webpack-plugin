@@ -8,6 +8,10 @@ declare module 'child_process' {
   function spawn (command: string | electron.AllElectron, args?: string[], options?: SpawnOptions): ChildProcess
 }
 
+declare interface Options {
+  port?: number
+}
+
 export = class ElectronDevWebpackPlugin {
   private port: number
   private process: ChildProcess[] = []
@@ -15,7 +19,7 @@ export = class ElectronDevWebpackPlugin {
 
   constructor ({
     port = 5858 // electron inspect端口
-  } = {}) {
+  }: Options = {}) {
     this.port = port
   }
 
