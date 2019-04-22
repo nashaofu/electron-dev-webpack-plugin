@@ -1,12 +1,10 @@
 import chalk from 'chalk'
+import kill from 'tree-kill'
 import electron from 'electron'
+import spawn from 'cross-spawn'
 import { Compiler } from 'webpack'
 import portfinder from 'portfinder'
-import { ChildProcess, spawn } from 'child_process'
-
-declare module 'child_process' {
-  function spawn (command: string | electron.AllElectron, args?: string[], options?: SpawnOptions): ChildProcess
-}
+import { ChildProcess } from 'child_process'
 
 declare interface Options {
   port?: number
@@ -14,13 +12,27 @@ declare interface Options {
 
 export = class ElectronDevWebpackPlugin {
   private port: number
-  private process: ChildProcess[] = []
-  private timer?: NodeJS.Timer
+  private process?: ChildProcess | null
 
   constructor ({
     port = 5858 // electron inspect端口
   }: Options = {}) {
     this.port = port
+    const signals: NodeJS.Signals[] = ['SIGINT', 'SIGTERM']
+
+    /**
+     * 主进程结束后同时也结束子进程
+     */
+    signals.forEach(signal => {
+      /**
+       * SIGTERM 和 SIGINT 在非windows平台绑定了默认的监听器，这样进程以代码128 + signal number结束之前，可以重置终端模式。
+       * 如果这两个事件任意一个绑定了新的监听器，原有默认的行为会被移除(Node.js不会结束，需要手动结束)。
+       */
+      process.on(signal, () => {
+        this.kill()
+          .then(() => process.exit(0))
+      })
+    })
   }
 
   /**
@@ -31,9 +43,7 @@ export = class ElectronDevWebpackPlugin {
     portfinder.basePort = this.port
     compiler.hooks.done.tapPromise('ElectronDevWebpackPlugin', () => {
       const promise = portfinder.getPortPromise()
-      promise
-        .then(port => this.spawn(port))
-        .catch(err => this.spawn())
+      promise.then(port => this.spawn(port)).catch(() => this.spawn())
       return promise
     })
   }
@@ -43,76 +53,52 @@ export = class ElectronDevWebpackPlugin {
    * @param {Number|undefined} port
    */
   private spawn (port?: number) {
-    this.clear()
-      .then(() => {
-        const args = typeof port === 'number'
-          ? [`--inspect=${port}`, '.']
-          : ['.']
-        const cp: ChildProcess = spawn(electron, args)
-
-        cp.stdout.on('data', data => {
-          this.log(chalk.yellowBright.bold.strikethrough(data.toString()))
-        })
-        cp.stderr.on('data', data => {
-          this.log(chalk.redBright.bold.strikethrough(data.toString()))
-        })
-        cp.on('close', () => {
-          this.process = this.process.filter(p => p.pid !== cp.pid)
-        })
-        this.process.push(cp)
+    this.kill().then(() => {
+      const args = typeof port === 'number' ? [`--inspect=${port}`, '.'] : ['.']
+      this.process = spawn(electron as unknown as string, args, {
+        stdio: ['inherit', 'pipe', 'pipe']
       })
+      if (this.process.stdout) {
+        this.process.stdout.on('data', (data: Buffer) => this.info(data))
+      }
+      if (this.process.stderr) {
+        this.process.stderr.on('data', (data: Buffer) => this.warn(data))
+      }
+    })
   }
 
   /**
    * 清理旧进程
    */
-  private clear (): Promise<void> {
+  private kill (): Promise<void> {
     return new Promise((resolve, reject) => {
-      const next = () => {
-        this.kill()
-        // 检查旧进程，防止没有被清理掉
-        if (this.timer) {
-          clearTimeout(this.timer)
-        }
-        if (this.process.length) {
-          this.timer = setTimeout(() => next(), 1000)
-        } else {
-          resolve()
-        }
+      if (!this.process) {
+        return resolve()
       }
-      next()
+      kill(this.process.pid, 'SIGKILL', () => {
+        this.process = null
+        resolve()
+      })
     })
   }
 
   /**
-   * 杀掉进程
+   * 打印主进程输出日志
+   * @param {Buffer} data
    */
-  private kill () {
-    this.process = this.process.reduce((p: ChildProcess[], cp: ChildProcess) => {
-      if (!cp.killed) {
-        try {
-          if (process.platform === 'linux' || process.platform === 'darwin') {
-            process.kill(cp.pid)
-          }
-          cp.kill()
-        } catch (e) {
-          console.log(`kill ${chalk.red(cp.pid.toString())} process is failed, ${chalk.red(e)}`)
-        }
-      }
-      if (!cp.killed) {
-        p.push(cp)
-      }
-      return p
-    }, [])
+  private info (data: Buffer) {
+    console.log(`${chalk.bgGreen.black('', 'MAIN PROCESS', '')} ${chalk.green('Info Start')}\n`)
+    console.log(chalk.yellowBright.strikethrough(data.toString()))
+    console.log(`${chalk.bgGreen.black('', 'MAIN PROCESS', '')} ${chalk.green('Info End')}\n`)
   }
 
   /**
-   * 打印主进程输出
-   * @param {*} data
+   * 打印主进程输出错误
+   * @param {Buffer} data
    */
-  private log (data: string) {
-    console.log('------------Main Process Log Start------------')
-    console.log(data)
-    console.log('-------------Main Process Log End-------------')
+  private warn (data: Buffer) {
+    console.log(`${chalk.bgRed.black('', 'MAIN PROCESS', '')} ${chalk.red('Warn Start')}\n`)
+    console.log(chalk.redBright.strikethrough(data.toString()))
+    console.log(`${chalk.bgRed.black('', 'MAIN PROCESS', '')} ${chalk.red('Warn End')}\n`)
   }
 }
