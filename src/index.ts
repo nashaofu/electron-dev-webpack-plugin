@@ -8,16 +8,33 @@ import { ChildProcess } from 'child_process'
 
 declare interface Options {
   port?: number
+  title?: string
+  info?: (data: string) => void
+  warn?: (data: string) => void
+}
+declare interface Logger {
+  info?: (data: string) => void
+  warn?: (data: string) => void
 }
 
 export = class ElectronDevWebpackPlugin {
   private port: number
+  private title: string
   private process?: ChildProcess | null
+  private logger: Logger
 
   constructor ({
-    port = 5858 // electron inspect端口
+    port = 5858, // electron inspect端口
+    title = 'MAIN PROCESS',
+    info,
+    warn
   }: Options = {}) {
     this.port = port
+    this.title = title
+    this.logger = {
+      info,
+      warn
+    }
     const signals: NodeJS.Signals[] = ['SIGINT', 'SIGTERM']
 
     /**
@@ -40,29 +57,37 @@ export = class ElectronDevWebpackPlugin {
    * @param {*} compiler
    */
   public apply (compiler: Compiler) {
-    portfinder.basePort = this.port
-    compiler.hooks.done.tapPromise('ElectronDevWebpackPlugin', () => {
-      const promise = portfinder.getPortPromise()
-      promise.then(port => this.spawn(port)).catch(() => this.spawn())
-      return promise
-    })
-  }
-
-  /**
-   * 启动新进程
-   * @param {Number|undefined} port
-   */
-  private spawn (port?: number) {
-    this.kill().then(() => {
+    compiler.hooks.done.tapPromise('ElectronDevWebpackPlugin', async () => {
+      let port
+      try {
+        await this.kill()
+        if (typeof this.port === 'number') {
+          port = await portfinder.getPortPromise({ port: this.port })
+        }
+      } catch (e) {
+        console.error(e)
+      }
       const args = typeof port === 'number' ? [`--inspect=${port}`, '.'] : ['.']
       this.process = spawn(electron as unknown as string, args, {
         stdio: ['inherit', 'pipe', 'pipe']
       })
       if (this.process.stdout) {
-        this.process.stdout.on('data', (data: Buffer) => this.info(data))
+        this.process.stdout.on('data', (data: Buffer) => {
+          if (typeof this.logger.info === 'function') {
+            this.logger.info(data.toString())
+          } else {
+            this.info(data.toString())
+          }
+        })
       }
       if (this.process.stderr) {
-        this.process.stderr.on('data', (data: Buffer) => this.warn(data))
+        this.process.stderr.on('data', (data: Buffer) => {
+          if (typeof this.logger.warn === 'function') {
+            this.logger.warn(data.toString())
+          } else {
+            this.warn(data.toString())
+          }
+        })
       }
     })
   }
@@ -72,10 +97,9 @@ export = class ElectronDevWebpackPlugin {
    */
   private kill (): Promise<void> {
     return new Promise((resolve, reject) => {
-      if (!this.process) {
-        return resolve()
-      }
-      kill(this.process.pid, 'SIGKILL', () => {
+      if (!this.process || this.process.killed) return resolve()
+      kill(this.process.pid, 'SIGKILL', err => {
+        if (err) return reject(err)
         this.process = null
         resolve()
       })
@@ -84,21 +108,23 @@ export = class ElectronDevWebpackPlugin {
 
   /**
    * 打印主进程输出日志
-   * @param {Buffer} data
+   * @param {string} data
    */
-  private info (data: Buffer) {
-    console.log(`${chalk.bgGreen.black('', 'MAIN PROCESS', '')} ${chalk.green('Info Start')}\n`)
-    console.log(chalk.yellowBright.strikethrough(data.toString()))
-    console.log(`${chalk.bgGreen.black('', 'MAIN PROCESS', '')} ${chalk.green('Info End')}\n`)
+  private info (data: string) {
+    const title = chalk.bgBlue.black('', this.title, '')
+    const pid = chalk.bgWhite.black('', this.process ? `PID:${this.process.pid}` : '--', '')
+    console.log(`${title}${pid} ${chalk.blue('Info...')}\n`)
+    console.log(chalk.blueBright.strikethrough(data))
   }
 
   /**
    * 打印主进程输出错误
-   * @param {Buffer} data
+   * @param {string} data
    */
-  private warn (data: Buffer) {
-    console.log(`${chalk.bgRed.black('', 'MAIN PROCESS', '')} ${chalk.red('Warn Start')}\n`)
-    console.log(chalk.redBright.strikethrough(data.toString()))
-    console.log(`${chalk.bgRed.black('', 'MAIN PROCESS', '')} ${chalk.red('Warn End')}\n`)
+  private warn (data: string) {
+    const title = chalk.bgYellow.black('', this.title, '')
+    const pid = chalk.bgWhite.black('', this.process ? `PID:${this.process.pid}` : '--', '')
+    console.log(`${title}${pid} ${chalk.yellow('Warning...')}\n`)
+    console.log(chalk.yellowBright.strikethrough(data))
   }
 }

@@ -14,7 +14,8 @@ const config: Configuration = {
   watch: true,
   devtool: false,
   plugins: [
-    new ElectronDevWebpackPlugin()
+    new ElectronDevWebpackPlugin({
+    })
   ]
 }
 
