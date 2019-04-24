@@ -14,11 +14,10 @@ const config: Configuration = {
   watch: true,
   devtool: false,
   plugins: [
-    new ElectronDevWebpackPlugin({
-    })
+    new ElectronDevWebpackPlugin()
   ]
 }
 
 webpack(config, (err, stats) => {
-  console.log(err)
+  if (err) console.log(err)
 })

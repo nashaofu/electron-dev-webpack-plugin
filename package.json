@@ -1,11 +1,12 @@
 {
   "name": "electron-dev-webpack-plugin",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A webpack plugin for electron development",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "files": [
-    "lib/*"
+    "lib/*",
+    "screenshot.jpg"
   ],
   "scripts": {
     "dev": "tsc -p ./tsconfig.dev.json && node lib/webpack.config.js",

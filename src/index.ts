@@ -6,13 +6,14 @@ import { Compiler } from 'webpack'
 import portfinder from 'portfinder'
 import { ChildProcess } from 'child_process'
 
-declare interface Options {
+interface Options {
   port?: number
   title?: string
   info?: (data: string) => void
   warn?: (data: string) => void
 }
-declare interface Logger {
+
+interface Logger {
   info?: (data: string) => void
   warn?: (data: string) => void
 }
