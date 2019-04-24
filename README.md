@@ -71,7 +71,7 @@ new ElectronDevWebpackPlugin({
 
 ```js
 new ElectronDevWebpackPlugin({
-  info: data => console.log('INFO', data)
+  info: data => console.log(`INFO ${data}`)
 })
 ```
 
@@ -79,6 +79,6 @@ new ElectronDevWebpackPlugin({
 
 ```js
 new ElectronDevWebpackPlugin({
-  warn: data => console.warn('WARN', data)
+  warn: data => console.warn(`WARN ${data}`)
 })
 ```
