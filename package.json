@@ -1,6 +1,6 @@
 {
   "name": "electron-dev-webpack-plugin",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A webpack plugin for electron development",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -21,7 +21,7 @@
     "tree-kill": "^1.2.1"
   },
   "peerDependencies": {
-    "electron": "^2.0.14"
+    "electron": ">=2"
   },
   "devDependencies": {
     "@types/cross-spawn": "^6.0.0",
