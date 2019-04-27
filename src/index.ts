@@ -49,6 +49,10 @@ export = class ElectronDevWebpackPlugin {
       process.on(signal, () => {
         this.kill()
           .then(() => process.exit(0))
+          .catch(err => {
+            this.error(err)
+            process.exit(1)
+          })
       })
     })
   }
@@ -66,7 +70,7 @@ export = class ElectronDevWebpackPlugin {
           port = await portfinder.getPortPromise({ port: this.port })
         }
       } catch (e) {
-        console.error(e)
+        this.error(e)
       }
       const args = typeof port === 'number' ? [`--inspect=${port}`, '.'] : ['.']
       this.process = spawn(electron as unknown as string, args, {
@@ -114,7 +118,7 @@ export = class ElectronDevWebpackPlugin {
   private info (data: string) {
     const title = chalk.bgBlue.black('', this.title, '')
     const pid = chalk.bgWhite.black('', this.process ? `PID:${this.process.pid}` : '--', '')
-    console.log(`${title}${pid} ${chalk.blue('Info...')}\n`)
+    console.log(`${title}${pid} ${chalk.blue('INFO...')}\n`)
     console.log(chalk.blueBright.strikethrough(data))
   }
 
@@ -125,7 +129,17 @@ export = class ElectronDevWebpackPlugin {
   private warn (data: string) {
     const title = chalk.bgYellow.black('', this.title, '')
     const pid = chalk.bgWhite.black('', this.process ? `PID:${this.process.pid}` : '--', '')
-    console.log(`${title}${pid} ${chalk.yellow('Warning...')}\n`)
+    console.log(`${title}${pid} ${chalk.yellow('WARNING...')}\n`)
     console.log(chalk.yellowBright.strikethrough(data))
+  }
+
+  /**
+   * 打印插件错误
+   * @param {string|Error} data
+   */
+  private error (data: string | Error) {
+    const title = chalk.bgRed.black('', 'ELECTRON-DEV-WEBPACK-PLUGIN', '')
+    console.log(`${title} ${chalk.yellow('ERROR...')}\n`)
+    console.log(chalk.redBright.strikethrough(data as string))
   }
 }
