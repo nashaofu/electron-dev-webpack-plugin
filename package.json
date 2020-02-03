@@ -9,6 +9,7 @@
     "screenshot.jpg"
   ],
   "scripts": {
+    "prepublishOnly": "npm run build",
     "start": "node lib/webpack.config.js",
     "dev": "tsc -p ./tsconfig.dev.json --watch",
     "build": "npm run lint && npm run clean && tsc",
