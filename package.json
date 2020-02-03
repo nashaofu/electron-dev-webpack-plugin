@@ -1,6 +1,6 @@
 {
   "name": "electron-dev-webpack-plugin",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "A webpack plugin for electron development",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -9,6 +9,7 @@
     "screenshot.jpg"
   ],
   "scripts": {
+    "start": "node lib/webpack.config.js",
     "dev": "tsc -p ./tsconfig.dev.json --watch",
     "build": "npm run lint && npm run clean && tsc",
     "lint": "eslint . --ext .js,.ts --fix",
