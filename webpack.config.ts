@@ -4,6 +4,7 @@ import ElectronDevWebpackPlugin from './src'
 
 const config: Configuration = {
   mode: 'development',
+  target: 'electron-main',
   entry: {
     app: './app.js'
   },
@@ -13,11 +14,19 @@ const config: Configuration = {
   },
   watch: true,
   devtool: false,
-  plugins: [
-    new ElectronDevWebpackPlugin()
-  ]
+  plugins: [new ElectronDevWebpackPlugin()]
 }
 
 webpack(config, (err, stats) => {
-  if (err) console.log(err)
+  if (err) return console.log(err)
+  // 打印结果
+  process.stdout.write(
+    stats.toString({
+      colors: true,
+      modules: false,
+      children: false,
+      chunks: false,
+      chunkModules: false
+    }) + '\n\n'
+  )
 })

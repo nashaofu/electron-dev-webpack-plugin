@@ -61,7 +61,7 @@ export = class ElectronDevWebpackPlugin {
    * webpack调用接口
    * @param {*} compiler
    */
-  public apply (compiler: Compiler) {
+  public apply (compiler: Compiler): void {
     compiler.hooks.done.tapPromise('ElectronDevWebpackPlugin', async () => {
       let port
       try {
@@ -73,7 +73,7 @@ export = class ElectronDevWebpackPlugin {
         this.error(e)
       }
       const args = typeof port === 'number' ? [`--inspect=${port}`, '.'] : ['.']
-      this.process = spawn(electron as unknown as string, args, {
+      this.process = spawn((electron as unknown) as string, args, {
         stdio: ['inherit', 'pipe', 'pipe']
       })
       if (this.process.stdout) {
@@ -115,7 +115,7 @@ export = class ElectronDevWebpackPlugin {
    * 打印主进程输出日志
    * @param {string} data
    */
-  private info (data: string) {
+  private info (data: string): void {
     const title = chalk.bgBlue.black('', this.title, '')
     const pid = chalk.bgWhite.black('', this.process ? `PID:${this.process.pid}` : '--', '')
     console.log(`${title}${pid} ${chalk.blue('INFO...')}\n`)
@@ -126,7 +126,7 @@ export = class ElectronDevWebpackPlugin {
    * 打印主进程输出错误
    * @param {string} data
    */
-  private warn (data: string) {
+  private warn (data: string): void {
     const title = chalk.bgYellow.black('', this.title, '')
     const pid = chalk.bgWhite.black('', this.process ? `PID:${this.process.pid}` : '--', '')
     console.log(`${title}${pid} ${chalk.yellow('WARNING...')}\n`)
@@ -137,7 +137,7 @@ export = class ElectronDevWebpackPlugin {
    * 打印插件错误
    * @param {string|Error} data
    */
-  private error (data: string | Error) {
+  private error (data: string | Error): void {
     const title = chalk.bgRed.black('', 'ELECTRON-DEV-WEBPACK-PLUGIN', '')
     console.log(`${title} ${chalk.yellow('ERROR...')}\n`)
     console.log(chalk.redBright.strikethrough(data as string))
